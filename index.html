@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>AnimeGO Пульт</title>
+  <style>
+    :root {
+      --bg-primary: #0a0d14;
+      --bg-card: rgba(22, 27, 39, 0.75);
+      --bg-card-hover: rgba(30, 38, 55, 0.9);
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.35);
+      --accent-active: #1d4ed8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: radial-gradient(circle at top, #141b2d 0%, var(--bg-primary) 100%);
+      color: var(--text-primary);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 20px);
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    /* Верхняя панель */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .header-title span {
+      background: linear-gradient(135deg, #60a5fa, #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .room-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      cursor: pointer;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    /* Блок ввода комнаты, если не указана */
+    .room-input-card {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .room-input-card.visible {
+      display: flex;
+    }
+
+    .room-input-card h2 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .room-input-card p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .room-input-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .room-input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      padding: 12px 14px;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .room-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-connect {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Карточки управления */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+    }
+
+    /* Кнопки переключения серий */
+    .episodes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-episode {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn-episode:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-episode svg {
+      width: 28px;
+      height: 28px;
+      fill: currentColor;
+    }
+
+    .btn-episode span {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Блок воспроизведения */
+    .playback-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .btn-seek {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .btn-seek:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .btn-seek svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+
+    .btn-seek span {
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .btn-play-pause {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      border: none;
+      border-radius: 50%;
+      width: 86px;
+      height: 86px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 8px 24px var(--accent-glow);
+      transition: transform 0.1s ease, box-shadow 0.15s ease;
+    }
+
+    .btn-play-pause:active {
+      transform: scale(0.92);
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-play-pause svg {
+      width: 38px;
+      height: 38px;
+      fill: currentColor;
+    }
+
+    /* Нижние кнопки (Фуллскрин и Звук) */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .btn-tool {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      padding: 14px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .btn-tool:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-tool svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* Всплывающий тост обратной связи */
+    .toast {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 20px) + 12px);
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 999;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Шапка -->
+    <header class="header">
+      <div class="header-title">
+        <span>AnimeGO</span> Пульт
+      </div>
+      <div class="room-badge" id="roomBadge" title="Нажмите, чтобы сменить комнату">
+        <div class="status-dot" id="statusDot"></div>
+        <span id="roomName">...</span>
+      </div>
+    </header>
+
+    <!-- Окно ручного ввода комнаты, если параметр ?room отсутствует -->
+    <div class="room-input-card" id="roomInputCard">
+      <h2>Подключение к плееру</h2>
+      <p>Введите код комнаты, отображаемый на экране компьютера при нажатии кнопки «📱 Пульт»:</p>
+      <div class="room-input-group">
+        <input type="text" class="room-input" id="roomInput" placeholder="animego_..." autocomplete="off" autocorrect="off" autocapitalize="off">
+        <button class="btn-connect" id="btnConnect">Войти</button>
+      </div>
+    </div>
+
+    <!-- Основной блок пульта -->
+    <main class="controls-area" id="controlsArea">
+      <!-- Переключение серий -->
+      <section class="card">
+        <div class="card-title">Серии</div>
+        <div class="episodes-grid">
+          <button class="btn-episode" data-cmd="PREV_EPISODE">
+            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            <span>Пред. серия</span>
+          </button>
+          <button class="btn-episode" data-cmd="NEXT_EPISODE">
+            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+            <span>След. серия</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Воспроизведение и перемотка -->
+      <section class="card">
+        <div class="card-title">Управление плеером</div>
+        <div class="playback-main">
+          <button class="btn-seek" data-cmd="SEEK_BACK" data-seconds="10" title="Назад 10 сек">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+            <span>-10с</span>
+          </button>
+
+          <button class="btn-play-pause" data-cmd="TOGGLE_PLAY" title="Пауза / Плей">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </button>
+
+          <button class="btn-seek" data-cmd="SEEK_FORWARD" data-seconds="10" title="Вперед 10 сек">
+            <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
+            <span>+10с</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Дополнительные функции -->
+      <section class="card">
+        <div class="card-title">Экран и звук</div>
+        <div class="tools-grid">
+          <button class="btn-tool" data-cmd="TOGGLE_FULLSCREEN">
+            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+            <span>Полный экран</span>
+          </button>
+          <button class="btn-tool" data-cmd="TOGGLE_MUTE">
+            <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+            <span>Звук вкл/выкл</span>
+          </button>
+        </div>
+
+        <div class="tools-grid" style="margin-top: 4px;">
+          <button class="btn-tool" data-cmd="VOLUME_DOWN">
+            <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+            <span>Громкость -</span>
+          </button>
+          <button class="btn-tool" data-cmd="VOLUME_UP">
+            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+            <span>Громкость +</span>
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Всплывающее уведомление -->
+  <div class="toast" id="toast">
+    <span id="toastText">Команда отправлена</span>
+  </div>
+
+  <script>
+    (function () {
+      let currentRoom = null;
+      let toastTimer = null;
+
+      const roomBadge = document.getElementById('roomBadge');
+      const roomName = document.getElementById('roomName');
+      const statusDot = document.getElementById('statusDot');
+      const roomInputCard = document.getElementById('roomInputCard');
+      const controlsArea = document.getElementById('controlsArea');
+      const roomInput = document.getElementById('roomInput');
+      const btnConnect = document.getElementById('btnConnect');
+      const toast = document.getElementById('toast');
+      const toastText = document.getElementById('toastText');
+
+      function showToast(text) {
+        toastText.textContent = text;
+        toast.classList.add('visible');
+        if (toastTimer) clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toast.classList.remove('visible');
+        }, 1500);
+      }
+
+      function getRoomFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('room') || localStorage.getItem('animego_last_room');
+      }
+
+      function setRoom(room) {
+        if (!room) {
+          roomInputCard.classList.add('visible');
+          controlsArea.style.display = 'none';
+          roomName.textContent = 'Не подключен';
+          statusDot.classList.add('offline');
+          return;
+        }
+
+        currentRoom = room.trim();
+        localStorage.setItem('animego_last_room', currentRoom);
+
+        // Обновляем URL без перезагрузки
+        const url = new URL(window.location.href);
+        url.searchParams.set('room', currentRoom);
+        window.history.replaceState({}, '', url.toString());
+
+        roomName.textContent = currentRoom.length > 14 ? currentRoom.slice(0, 12) + '…' : currentRoom;
+        statusDot.classList.remove('offline');
+        roomInputCard.classList.remove('visible');
+        controlsArea.style.display = 'flex';
+
+        showToast('Подключено к ' + currentRoom);
+      }
+
+      // Отправка команды через ntfy.sh
+      async function sendCommand(command, extra = {}) {
+        if (!currentRoom) {
+          showToast('Сначала введите код комнаты');
+          return;
+        }
+
+        // Виброотклик
+        if (navigator.vibrate) {
+          try { navigator.vibrate(35); } catch (e) {}
+        }
+
+        const payload = {
+          command: command,
+          ...extra,
+          timestamp: Date.now()
+        };
+
+        const commandLabels = {
+          'TOGGLE_PLAY': 'Пауза / Воспроизведение',
+          'NEXT_EPISODE': 'Следующая серия',
+          'PREV_EPISODE': 'Предыдущая серия',
+          'SEEK_BACK': 'Перемотка назад 10с',
+          'SEEK_FORWARD': 'Перемотка вперед 10с',
+          'TOGGLE_FULLSCREEN': 'Полный экран',
+          'TOGGLE_MUTE': 'Звук вкл/выкл',
+          'VOLUME_UP': 'Громкость +',
+          'VOLUME_DOWN': 'Громкость -'
+        };
+
+        showToast(commandLabels[command] || 'Отправка команды...');
+
+        try {
+          const res = await fetch(`https://ntfy.sh/${encodeURIComponent(currentRoom)}`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (!res.ok) {
+            throw new Error(`Ошибка HTTP: ${res.status}`);
+          }
+        } catch (err) {
+          console.error('[AnimeGO Remote]', err);
+          showToast('Ошибка связи с сервером');
+          statusDot.classList.add('offline');
+          setTimeout(() => statusDot.classList.remove('offline'), 2000);
+        }
+      }
+
+      // Навешиваем клики на все интерактивные кнопки
+      document.querySelectorAll('[data-cmd]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const cmd = btn.getAttribute('data-cmd');
+          const seconds = btn.getAttribute('data-seconds');
+          const extra = seconds ? { seconds: parseInt(seconds, 10) } : {};
+          sendCommand(cmd, extra);
+        });
+      });
+
+      // Ручной ввод комнаты
+      btnConnect.addEventListener('click', () => {
+        const val = roomInput.value.trim();
+        if (val) setRoom(val);
+      });
+
+      roomInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const val = roomInput.value.trim();
+          if (val) setRoom(val);
+        }
+      });
+
+      // Клик по бейджу комнаты для быстрой смены
+      roomBadge.addEventListener('click', () => {
+        const next = prompt('Введите ID комнаты AnimeGO:', currentRoom || '');
+        if (next !== null && next.trim()) {
+          setRoom(next.trim());
+        }
+      });
+
+      // Инициализация при загрузке
+      const initialRoom = getRoomFromUrl();
+      setRoom(initialRoom);
+    })();
+  </script>
+</body>
+</html>
