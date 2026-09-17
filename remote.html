@@ -2,27 +2,37 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0d1117">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>AnimeGO Пульт</title>
+  <script src="peerjs.min.js"></script>
+  <script>
+    if (typeof Peer === 'undefined') {
+      document.write('<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"><\/script>');
+    }
+  </script>
   <style>
     :root {
       --bg-primary: #0a0d14;
-      --bg-card: rgba(22, 27, 39, 0.75);
-      --bg-card-hover: rgba(30, 38, 55, 0.9);
+      --bg-card: rgba(20, 26, 38, 0.85);
+      --bg-card-hover: rgba(28, 36, 52, 0.95);
       --accent: #2563eb;
-      --accent-glow: rgba(37, 99, 235, 0.35);
-      --accent-active: #1d4ed8;
+      --accent-glow: rgba(37, 99, 235, 0.4);
+      --accent-purple: #9333ea;
+      --accent-purple-glow: rgba(147, 51, 234, 0.35);
       --success: #10b981;
       --danger: #ef4444;
       --text-primary: #f8fafc;
       --text-secondary: #94a3b8;
-      --border-color: rgba(255, 255, 255, 0.08);
-      --radius-lg: 20px;
-      --radius-md: 14px;
-      --radius-sm: 10px;
+      --border-color: rgba(255, 255, 255, 0.09);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
     }
 
     * {
@@ -42,16 +52,16 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: env(safe-area-inset-top, 16px) 16px env(safe-area-inset-bottom, 20px);
+      padding: max(20px, env(safe-area-inset-top, 20px)) max(12px, env(safe-area-inset-right, 12px)) max(16px, env(safe-area-inset-bottom, 16px)) max(12px, env(safe-area-inset-left, 12px));
       overflow-x: hidden;
     }
 
     .container {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 10px;
       flex: 1;
     }
 
@@ -60,7 +70,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
+      padding: 10px 14px;
       background: var(--bg-card);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -72,15 +82,56 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 16px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
     }
 
-    .header-title span {
-      background: linear-gradient(135deg, #60a5fa, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .animego-header-logo {
+      height: 22px;
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .animego-search-logo {
+      height: 24px;
+      width: auto;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    .animego-empty-logo {
+      height: 38px;
+      width: auto;
+      opacity: 0.35;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.5));
+    }
+
+    .logo-anime path {
+      fill: #ffffff;
+    }
+
+    .logo-go path {
+      fill: #ff5c57;
+    }
+
+    .header-remote-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 3px 7px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-secondary);
+    }
+
+    .search-branding-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
 
     .room-badge {
@@ -89,8 +140,8 @@
       gap: 6px;
       font-size: 12px;
       color: var(--text-secondary);
-      background: rgba(0, 0, 0, 0.3);
-      padding: 6px 12px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 5px 10px;
       border-radius: 20px;
       border: 1px solid var(--border-color);
       cursor: pointer;
@@ -109,92 +160,207 @@
       box-shadow: 0 0 8px var(--danger);
     }
 
-    /* Блок ввода комнаты, если не указана */
-    .room-input-card {
-      display: none;
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      text-align: center;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .room-input-card.visible {
-      display: flex;
-    }
-
-    .room-input-card h2 {
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .room-input-card p {
-      font-size: 13px;
-      color: var(--text-secondary);
-      line-height: 1.4;
-    }
-
-    .room-input-group {
-      display: flex;
+    /* Навигация по вкладкам */
+    .tabs-nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-    }
-
-    .room-input {
-      flex: 1;
-      background: rgba(0, 0, 0, 0.4);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 4px;
+      border-radius: var(--radius-md);
       border: 1px solid var(--border-color);
-      border-radius: var(--radius-sm);
-      color: #fff;
-      padding: 12px 14px;
-      font-size: 15px;
-      outline: none;
     }
 
-    .room-input:focus {
-      border-color: var(--accent);
-    }
-
-    .btn-connect {
-      background: var(--accent);
-      color: #fff;
+    .tab-btn {
+      background: none;
       border: none;
-      border-radius: var(--radius-sm);
-      padding: 12px 20px;
-      font-size: 15px;
+      color: var(--text-secondary);
+      font-size: 13px;
       font-weight: 600;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s ease;
     }
 
-    /* Карточки управления */
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Карточки */
     .card {
       background: var(--bg-card);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid var(--border-color);
       border-radius: var(--radius-lg);
-      padding: 18px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     }
 
     .card-title {
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: var(--text-secondary);
-      margin-bottom: 2px;
+    }
+
+    /* Баннер запуска неинициализированного плеера */
+    .start-player-banner {
+      display: none;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 14px;
+      border-radius: var(--radius-md);
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+      animation: banner-pulse 1.8s infinite;
+    }
+
+    .start-player-banner.visible {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    @keyframes banner-pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4); }
+      50% { transform: scale(1.02); box-shadow: 0 8px 26px rgba(124, 58, 237, 0.6); }
+    }
+
+    /* Информация о текущем аниме */
+    .now-playing-card {
+      background: linear-gradient(135deg, rgba(37, 99, 235, 0.15), rgba(147, 51, 234, 0.1));
+      border: 1px solid rgba(96, 165, 250, 0.25);
+    }
+
+    .now-playing-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .now-playing-title {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #ffffff;
+      max-height: 42px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .current-episode-tag {
+      background: #2563eb;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      align-self: flex-start;
+    }
+
+    /* Горизонтальный скролл чипов (серии, озвучки, плееры, качество) */
+    .chips-scroll-wrap {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 4px 2px 8px 2px;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+      align-items: center;
+    }
+
+    .chips-scroll-wrap::-webkit-scrollbar {
+      height: 4px;
+    }
+    .chips-scroll-wrap::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 4px;
+    }
+
+    .chip-item {
+      padding: 0 14px;
+      height: 36px;
+      line-height: 34px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      flex-shrink: 0;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: all 0.15s ease;
+    }
+
+    .chip-item:active {
+      transform: scale(0.93);
+    }
+
+    .chip-item.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .chip-item.purple.active {
+      background: #9333ea;
+      border-color: #a855f7;
+      box-shadow: 0 0 10px var(--accent-purple-glow);
+    }
+
+    #episodesPillsRow .chip-item {
+      min-width: 44px;
+      padding: 0 10px;
+      font-weight: 700;
+    }
+
+    #franchisePillsRow .chip-item {
+      max-width: 250px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 12px;
+      padding: 0 12px;
+    }
+
+    #translationsPillsRow .chip-item {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     /* Кнопки переключения серий */
     .episodes-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
 
     .btn-episode {
@@ -202,29 +368,28 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       color: var(--text-primary);
-      padding: 16px 12px;
+      padding: 12px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 6px;
       cursor: pointer;
-      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+      transition: transform 0.1s ease, background 0.15s ease;
     }
 
     .btn-episode:active {
       transform: scale(0.96);
       background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.3);
     }
 
     .btn-episode svg {
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       fill: currentColor;
     }
 
     .btn-episode span {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
     }
 
@@ -234,15 +399,15 @@
       align-items: center;
       justify-content: space-between;
       gap: 12px;
-      padding: 8px 0;
+      padding: 4px 0;
     }
 
     .btn-seek {
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border-color);
       border-radius: 50%;
-      width: 64px;
-      height: 64px;
+      width: 58px;
+      height: 58px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -259,8 +424,8 @@
     }
 
     .btn-seek svg {
-      width: 22px;
-      height: 22px;
+      width: 20px;
+      height: 20px;
       fill: currentColor;
     }
 
@@ -273,8 +438,8 @@
       background: linear-gradient(135deg, #2563eb, #3b82f6);
       border: none;
       border-radius: 50%;
-      width: 86px;
-      height: 86px;
+      width: 78px;
+      height: 78px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -286,20 +451,19 @@
 
     .btn-play-pause:active {
       transform: scale(0.92);
-      box-shadow: 0 4px 12px var(--accent-glow);
     }
 
     .btn-play-pause svg {
-      width: 38px;
-      height: 38px;
+      width: 36px;
+      height: 36px;
       fill: currentColor;
     }
 
-    /* Нижние кнопки (Фуллскрин и Звук) */
+    /* Нижние кнопки (Экран и Звук) */
     .tools-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px;
     }
 
     .btn-tool {
@@ -307,12 +471,12 @@
       border: 1px solid var(--border-color);
       border-radius: var(--radius-md);
       color: var(--text-primary);
-      padding: 14px 12px;
+      padding: 10px 8px;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.1s ease, background 0.15s ease;
@@ -324,21 +488,348 @@
     }
 
     .btn-tool svg {
-      width: 20px;
-      height: 20px;
+      width: 17px;
+      height: 17px;
       fill: currentColor;
     }
 
-    /* Всплывающий тост обратной связи */
+    /* Вкладка поиска */
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .tab-content.active {
+      display: flex;
+    }
+
+    .search-input-group {
+      display: flex;
+      gap: 6px;
+    }
+
+    .input-field {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      padding: 10px 12px;
+      font-size: 13px;
+      outline: none;
+      user-select: text;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-action-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .results-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 62vh;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .anime-card-item {
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      align-items: center;
+    }
+
+    .anime-card-item:active {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .anime-card-poster {
+      width: 50px;
+      height: 70px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #1e293b;
+      flex-shrink: 0;
+    }
+
+    .anime-card-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+
+    .anime-card-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .anime-card-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    .btn-watch-anime {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      align-self: flex-start;
+      margin-top: 2px;
+      cursor: pointer;
+    }
+
+    .empty-placeholder {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 13px;
+      padding: 28px 14px;
+      line-height: 1.5;
+    }
+
+    .spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      width: 26px;
+      height: 26px;
+      animation: spin 0.8s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Кнопки переключения источника поиска (AnimeGO.me vs AnimeGO.co) */
+    .search-sources-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .source-pill {
+      flex: 1;
+      padding: 9px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .source-pill:active {
+      transform: scale(0.96);
+    }
+
+    .source-pill.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .source-pill[data-source="animego.co"].active {
+      background: #ea580c;
+      border-color: #f97316;
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(234, 88, 12, 0.4);
+    }
+
+    /* Модальное окно выбора сезона/версии зеркала */
+    .mirror-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(8, 10, 15, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+
+    .mirror-modal-overlay.visible {
+      display: flex;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .mirror-modal-card {
+      background: #141a26;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 400px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      overflow: hidden;
+    }
+
+    .mirror-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .mirror-modal-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .mirror-modal-close {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .mirror-modal-close:hover {
+      color: #fff;
+    }
+
+    .mirror-modal-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      padding: 10px 16px 4px;
+    }
+
+    .mirror-options-list {
+      padding: 10px 16px 16px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+    }
+
+    .mirror-option-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 8px 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .mirror-option-item:active {
+      background: rgba(37, 99, 235, 0.2);
+      border-color: #3b82f6;
+    }
+
+    .mirror-option-poster {
+      width: 42px;
+      height: 58px;
+      border-radius: 4px;
+      object-fit: cover;
+      background: #1e293b;
+      flex-shrink: 0;
+    }
+
+    .mirror-option-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      overflow: hidden;
+    }
+
+    .mirror-option-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1.3;
+    }
+
+    .mirror-option-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Окно ввода комнаты */
+    .room-input-card {
+      display: none;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      text-align: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .room-input-card.visible {
+      display: flex;
+    }
+
+    /* Тост обратной связи */
     .toast {
       position: fixed;
-      bottom: calc(env(safe-area-inset-bottom, 20px) + 12px);
+      bottom: calc(env(safe-area-inset-bottom, 16px) + 8px);
       left: 50%;
       transform: translateX(-50%) translateY(20px);
       background: rgba(15, 23, 42, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 10px 18px;
-      border-radius: 24px;
+      padding: 9px 16px;
+      border-radius: 20px;
       font-size: 13px;
       font-weight: 500;
       color: #fff;
@@ -348,7 +839,7 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       opacity: 0;
       pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.2s ease, transform 0.2s ease;
       z-index: 999;
     }
 
@@ -364,7 +855,20 @@
     <!-- Шапка -->
     <header class="header">
       <div class="header-title">
-        <span>AnimeGO</span> Пульт
+        <svg class="animego-header-logo" viewBox="0 0 95.55 22.53" role="img" aria-label="AnimeGO">
+          <g class="logo-anime">
+            <path d="M12.81,30.78l-.69-4.17-4.47.18L6.51,32.43l-4.2-.36L7.68,10.32l5.55.48,3.93,20.34ZM10.17,14.25,8.28,23.58l3.36-.12Z" transform="translate(-2.31 -9.9)"></path>
+            <path d="M25.41,16.8q4,0,4,6.6,0,3.48-.39,7.38l-3.51-.33q.33-3.42.33-6.91c0-2.33-.33-3.5-1-3.5-.32,0-.73.81-1.23,2.42a21.53,21.53,0,0,0-.93,4.72q.06,1.23.24,4.44l-3.51-.33q-.33-4.23-.33-7.44t.18-5.76l2.22.24q.06.24.45,2Q23.64,16.8,25.41,16.8Z" transform="translate(-2.31 -9.9)"></path>
+            <path d="M32.73,11.49l3.36.39-.3,3.36-3.36-.42Zm-.24,5.28,3.42.33V31.5l-3.42-.33Z" transform="translate(-2.31 -9.9)"></path>
+            <path d="M45.63,17.7A3.29,3.29,0,0,1,48.42,19q1.56-2.28,3.09-2.28,4.17,0,4.17,6.27a74.35,74.35,0,0,1-.6,8.58l-3.48-.3q.57-5.61.57-8.55t-1-2.94q-.42,0-1,1.35a10.64,10.64,0,0,0-.75,3q-.06,3.75-.24,6.69l-3.51-.33q.24-4.23.24-7t-.75-2.73c-.32,0-.73.56-1.24,1.67a14.47,14.47,0,0,0-1.1,3.49q0,2.76.27,5.7l-3.51-.33q-.33-4.23-.33-7.71t.18-6.51l2.49.18q.18.81.51,2.94Q44.07,17.7,45.63,17.7Z" transform="translate(-2.31 -9.9)"></path>
+            <path d="M62.43,28.92q1.14,0,2.43-2.19l2.28,1.35a15.91,15.91,0,0,1-1.09,1.68,5.54,5.54,0,0,1-1.58,1.32,4.46,4.46,0,0,1-2.34.63A3.93,3.93,0,0,1,59,30.11a6.74,6.74,0,0,1-1.29-4.34A15.16,15.16,0,0,1,58.77,20a5.69,5.69,0,0,1,1.73-2.29,3.71,3.71,0,0,1,2.31-.89,4.11,4.11,0,0,1,1.9.38,4.29,4.29,0,0,1,1.16.84,4,4,0,0,1,.76,1.36,13.78,13.78,0,0,1,.47,1.47,12.11,12.11,0,0,1,.22,1.65q.12,1.44.12,2.61a51.36,51.36,0,0,1-6.21,1.2,5.71,5.71,0,0,0,.42,1.92Q62,28.92,62.43,28.92Zm.66-9.21c-.44,0-.83.44-1.18,1.32a9.6,9.6,0,0,0-.62,3.06q1.59-.33,2.76-.63Q64.05,19.71,63.09,19.71Z" transform="translate(-2.31 -9.9)"></path>
+          </g>
+          <g class="logo-go">
+            <path d="M77.91,19.17a11.17,11.17,0,0,0,.12-2,6.88,6.88,0,0,0-.45-2.52c-.3-.77-.74-1.16-1.32-1.16s-1.38.91-2,2.72a16.86,16.86,0,0,0-1,5.82,15.59,15.59,0,0,0,.6,4.86c.4,1.17,1,1.75,1.77,1.75a1.92,1.92,0,0,0,1.77-1.08,9.54,9.54,0,0,0,.9-3.18,13.76,13.76,0,0,0-2.31.21l-.63-3q2.73-.18,6.84-.66a25,25,0,0,1,.18,2.85,9,9,0,0,1-.76,3.21,9.66,9.66,0,0,1-2.28,3.39A4.69,4.69,0,0,1,76,31.92a6,6,0,0,1-5-2.43,11,11,0,0,1-1.88-6.87,22.3,22.3,0,0,1,.81-6.12,12,12,0,0,1,2.4-4.68A4.72,4.72,0,0,1,76,10a5.74,5.74,0,0,1,3.72,1.44,5.27,5.27,0,0,1,1.46,2.15,7.81,7.81,0,0,1,.55,2.92,16.08,16.08,0,0,1-.27,3Z" transform="translate(-2.31 -9.9)"></path>
+            <path d="M90.68,32.1a5.89,5.89,0,0,1-4.83-2.56q-2-2.57-2-7.8A15.42,15.42,0,0,1,86,13.2q2.14-3.3,5-3.3a5.85,5.85,0,0,1,4.85,2.58q1.93,2.58,1.93,7.77a15.39,15.39,0,0,1-2.16,8.52Q93.54,32.1,90.68,32.1ZM88.83,15.8a15.42,15.42,0,0,0-1,5.85,12.5,12.5,0,0,0,.83,5.22c.55,1.13,1.23,1.69,2,1.69s1.55-.78,2.18-2.34a15.74,15.74,0,0,0,.94-5.86,12.86,12.86,0,0,0-.79-5.21c-.53-1.12-1.19-1.68-2-1.68S89.47,14.25,88.83,15.8Z" transform="translate(-2.31 -9.9)"></path>
+          </g>
+        </svg>
+        <span class="header-remote-badge">ПУЛЬТ</span>
       </div>
       <div class="room-badge" id="roomBadge" title="Нажмите, чтобы сменить комнату">
         <div class="status-dot" id="statusDot"></div>
@@ -374,80 +878,246 @@
 
     <!-- Окно ручного ввода комнаты, если параметр ?room отсутствует -->
     <div class="room-input-card" id="roomInputCard">
-      <h2>Подключение к плееру</h2>
-      <p>Введите код комнаты, отображаемый на экране компьютера при нажатии кнопки «📱 Пульт»:</p>
-      <div class="room-input-group">
-        <input type="text" class="room-input" id="roomInput" placeholder="animego_..." autocomplete="off" autocorrect="off" autocapitalize="off">
-        <button class="btn-connect" id="btnConnect">Войти</button>
+      <h2 style="font-size: 17px; font-weight: 700;">Подключение к плееру</h2>
+      <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+        Введите код комнаты с экрана компьютера (нажмите кнопку «📱 Пульт» на AnimeGO):
+      </p>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" class="input-field" id="roomInput" placeholder="ago_..." autocomplete="off">
+        <button class="btn-action-primary" id="btnConnect">Войти</button>
       </div>
     </div>
 
-    <!-- Основной блок пульта -->
-    <main class="controls-area" id="controlsArea">
-      <!-- Переключение серий -->
-      <section class="card">
-        <div class="card-title">Серии</div>
-        <div class="episodes-grid">
-          <button class="btn-episode" data-cmd="PREV_EPISODE">
-            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-            <span>Пред. серия</span>
-          </button>
-          <button class="btn-episode" data-cmd="NEXT_EPISODE">
-            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-            <span>След. серия</span>
-          </button>
-        </div>
-      </section>
+    <!-- Основной блок интерфейса -->
+    <div id="mainContent" style="display: none; flex-direction: column; gap: 10px;">
+      <!-- Вкладки -->
+      <nav class="tabs-nav">
+        <button class="tab-btn active" id="tabBtnRemote" data-tab="remote">
+          <span>🎮</span> Управление
+        </button>
+        <button class="tab-btn" id="tabBtnSearch" data-tab="search">
+          <span>🔍</span> Поиск аниме
+        </button>
+      </nav>
 
-      <!-- Воспроизведение и перемотка -->
-      <section class="card">
-        <div class="card-title">Управление плеером</div>
-        <div class="playback-main">
-          <button class="btn-seek" data-cmd="SEEK_BACK" data-seconds="10" title="Назад 10 сек">
-            <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
-            <span>-10с</span>
-          </button>
-
-          <button class="btn-play-pause" data-cmd="TOGGLE_PLAY" title="Пауза / Плей">
-            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-          </button>
-
-          <button class="btn-seek" data-cmd="SEEK_FORWARD" data-seconds="10" title="Вперед 10 сек">
-            <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
-            <span>+10с</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Дополнительные функции -->
-      <section class="card">
-        <div class="card-title">Экран и звук</div>
-        <div class="tools-grid">
-          <button class="btn-tool" data-cmd="TOGGLE_FULLSCREEN">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-            <span>Полный экран</span>
-          </button>
-          <button class="btn-tool" data-cmd="TOGGLE_MUTE">
-            <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
-            <span>Звук вкл/выкл</span>
-          </button>
+      <!-- ВКЛАДКА 1: ПУЛЬТ -->
+      <div class="tab-content active" id="tabContentRemote">
+        <!-- Баннер запуска неинициализированного плеера -->
+        <div class="start-player-banner" id="startPlayerBanner">
+          <svg style="width: 20px; height: 20px; fill: currentColor;" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <span>Нажмите, чтобы запустить плеер</span>
         </div>
 
-        <div class="tools-grid" style="margin-top: 4px;">
-          <button class="btn-tool" data-cmd="VOLUME_DOWN">
-            <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
-            <span>Громкость -</span>
-          </button>
-          <button class="btn-tool" data-cmd="VOLUME_UP">
-            <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-            <span>Громкость +</span>
-          </button>
-        </div>
-      </section>
-    </main>
+        <!-- Текущее аниме -->
+        <section class="card now-playing-card">
+          <div class="now-playing-header">
+            <div class="card-title">СЕЙЧАС НА ЭКРАНЕ</div>
+            <div class="current-episode-tag" id="currentEpisodeTag">Серия 1</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 2px 0 6px 0; font-size: 11px;">
+            <div style="display: flex; align-items: center; gap: 5px;">
+              <span style="color: var(--text-secondary);">Сайт:</span>
+              <span id="currentMirrorBadge" style="font-weight: 700; color: #38ef7d;">animego.me</span>
+            </div>
+            <button id="btnSwitchMirror" style="background: rgba(255, 122, 0, 0.15); border: 1px solid rgba(255, 122, 0, 0.4); color: #ffab40; border-radius: 12px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer;">
+              🔄 Зеркало РФ (animego.co)
+            </button>
+          </div>
+          <div class="now-playing-title" id="currentAnimeTitle">Синхронизация с компьютером...</div>
+
+          <!-- Выбор серии -->
+          <div style="margin-top: 2px;">
+            <div class="card-title" style="margin-bottom: 4px;">СЕРИЯ:</div>
+            <div class="chips-scroll-wrap" id="episodesPillsRow">
+              <div class="chip-item active">1</div>
+            </div>
+          </div>
+
+          <!-- Выбор озвучки -->
+          <div id="translationsSection" style="margin-top: 4px;">
+            <div class="card-title" style="margin-bottom: 4px;">ОЗВУЧКА:</div>
+            <div class="chips-scroll-wrap" id="translationsPillsRow">
+              <div class="chip-item purple active" data-translation="AniLibria">AniLibria</div>
+              <div class="chip-item purple" data-translation="Студийная Банда">Студийная Банда</div>
+              <div class="chip-item purple" data-translation="Dream Cast">Dream Cast</div>
+              <div class="chip-item purple" data-translation="AniDUB">AniDUB</div>
+            </div>
+          </div>
+
+          <!-- Выбор плеера (AniBoom, Kodik, Sibnet) -->
+          <div id="providersSection" style="margin-top: 4px;">
+            <div class="card-title" style="margin-bottom: 4px;">ПЛЕЕР:</div>
+            <div class="chips-scroll-wrap" id="providersPillsRow">
+              <div class="chip-item active" data-provider="AniBoom">AniBoom</div>
+              <div class="chip-item" data-provider="Kodik">Kodik</div>
+              <div class="chip-item" data-provider="Sibnet">Sibnet</div>
+            </div>
+          </div>
+
+          <!-- Выбор качества -->
+          <div style="margin-top: 4px;">
+            <div class="card-title" style="margin-bottom: 4px;">КАЧЕСТВО:</div>
+            <div class="chips-scroll-wrap" id="qualityPillsRow">
+              <div class="chip-item active" data-quality="1080p">1080p</div>
+              <div class="chip-item" data-quality="720p">720p</div>
+              <div class="chip-item" data-quality="480p">480p</div>
+              <div class="chip-item" data-quality="360p">360p</div>
+            </div>
+          </div>
+
+          <!-- Другие сезоны и фильмы франшизы -->
+          <div id="franchiseSection" style="display: none; margin-top: 4px;">
+            <div class="card-title" style="margin-bottom: 4px;">ДРУГИЕ СЕЗОНЫ:</div>
+            <div class="chips-scroll-wrap" id="franchisePillsRow"></div>
+          </div>
+        </section>
+
+        <!-- Переключение серий -->
+        <section class="card">
+          <div class="card-title">ПЕРЕКЛЮЧЕНИЕ СЕРИЙ</div>
+          <div class="episodes-grid">
+            <button class="btn-episode" data-cmd="PREV_EPISODE">
+              <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+              <span>Пред. серия</span>
+            </button>
+            <button class="btn-episode" data-cmd="NEXT_EPISODE">
+              <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+              <span>След. серия</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Воспроизведение и перемотка -->
+        <section class="card">
+          <div class="card-title">УПРАВЛЕНИЕ</div>
+          <div class="playback-main">
+            <button class="btn-seek" data-cmd="SEEK_BACK" data-seconds="10" title="Назад 10 сек">
+              <svg viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>
+              <span>-10с</span>
+            </button>
+
+            <button class="btn-play-pause" data-cmd="TOGGLE_PLAY" title="Пауза / Плей">
+              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+
+            <button class="btn-seek" data-cmd="SEEK_FORWARD" data-seconds="10" title="Вперед 10 сек">
+              <svg viewBox="0 0 24 24"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/></svg>
+              <span>+10с</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Экран и звук -->
+        <section class="card">
+          <div class="card-title">ЭКРАН И ЗВУК</div>
+          <div class="tools-grid">
+            <button class="btn-tool" data-cmd="TOGGLE_FULLSCREEN">
+              <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+              <span>Полный экран</span>
+            </button>
+            <button class="btn-tool" data-cmd="TOGGLE_MUTE">
+              <svg viewBox="0 0 24 24"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>
+              <span>Звук вкл/выкл</span>
+            </button>
+          </div>
+
+          <div class="tools-grid">
+            <button class="btn-tool" data-cmd="VOLUME_DOWN">
+              <svg viewBox="0 0 24 24"><path d="M18.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM5 9v6h4l5 5V4L9 9H5z"/></svg>
+              <span>Громкость -</span>
+            </button>
+            <button class="btn-tool" data-cmd="VOLUME_UP">
+              <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              <span>Громкость +</span>
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <!-- ВКЛАДКА 2: ПОИСК АНИМЕ -->
+      <div class="tab-content" id="tabContentSearch">
+        <section class="card">
+          <div class="search-branding-header">
+            <svg class="animego-search-logo" viewBox="0 0 95.55 22.53" role="img" aria-label="AnimeGO">
+              <g class="logo-anime">
+                <path d="M12.81,30.78l-.69-4.17-4.47.18L6.51,32.43l-4.2-.36L7.68,10.32l5.55.48,3.93,20.34ZM10.17,14.25,8.28,23.58l3.36-.12Z" transform="translate(-2.31 -9.9)"></path>
+                <path d="M25.41,16.8q4,0,4,6.6,0,3.48-.39,7.38l-3.51-.33q.33-3.42.33-6.91c0-2.33-.33-3.5-1-3.5-.32,0-.73.81-1.23,2.42a21.53,21.53,0,0,0-.93,4.72q.06,1.23.24,4.44l-3.51-.33q-.33-4.23-.33-7.44t.18-5.76l2.22.24q.06.24.45,2Q23.64,16.8,25.41,16.8Z" transform="translate(-2.31 -9.9)"></path>
+                <path d="M32.73,11.49l3.36.39-.3,3.36-3.36-.42Zm-.24,5.28,3.42.33V31.5l-3.42-.33Z" transform="translate(-2.31 -9.9)"></path>
+                <path d="M45.63,17.7A3.29,3.29,0,0,1,48.42,19q1.56-2.28,3.09-2.28,4.17,0,4.17,6.27a74.35,74.35,0,0,1-.6,8.58l-3.48-.3q.57-5.61.57-8.55t-1-2.94q-.42,0-1,1.35a10.64,10.64,0,0,0-.75,3q-.06,3.75-.24,6.69l-3.51-.33q.24-4.23.24-7t-.75-2.73c-.32,0-.73.56-1.24,1.67a14.47,14.47,0,0,0-1.1,3.49q0,2.76.27,5.7l-3.51-.33q-.33-4.23-.33-7.71t.18-6.51l2.49.18q.18.81.51,2.94Q44.07,17.7,45.63,17.7Z" transform="translate(-2.31 -9.9)"></path>
+                <path d="M62.43,28.92q1.14,0,2.43-2.19l2.28,1.35a15.91,15.91,0,0,1-1.09,1.68,5.54,5.54,0,0,1-1.58,1.32,4.46,4.46,0,0,1-2.34.63A3.93,3.93,0,0,1,59,30.11a6.74,6.74,0,0,1-1.29-4.34A15.16,15.16,0,0,1,58.77,20a5.69,5.69,0,0,1,1.73-2.29,3.71,3.71,0,0,1,2.31-.89,4.11,4.11,0,0,1,1.9.38,4.29,4.29,0,0,1,1.16.84,4,4,0,0,1,.76,1.36,13.78,13.78,0,0,1,.47,1.47,12.11,12.11,0,0,1,.22,1.65q.12,1.44.12,2.61a51.36,51.36,0,0,1-6.21,1.2,5.71,5.71,0,0,0,.42,1.92Q62,28.92,62.43,28.92Zm.66-9.21c-.44,0-.83.44-1.18,1.32a9.6,9.6,0,0,0-.62,3.06q1.59-.33,2.76-.63Q64.05,19.71,63.09,19.71Z" transform="translate(-2.31 -9.9)"></path>
+              </g>
+              <g class="logo-go">
+                <path d="M77.91,19.17a11.17,11.17,0,0,0,.12-2,6.88,6.88,0,0,0-.45-2.52c-.3-.77-.74-1.16-1.32-1.16s-1.38.91-2,2.72a16.86,16.86,0,0,0-1,5.82,15.59,15.59,0,0,0,.6,4.86c.4,1.17,1,1.75,1.77,1.75a1.92,1.92,0,0,0,1.77-1.08,9.54,9.54,0,0,0,.9-3.18,13.76,13.76,0,0,0-2.31.21l-.63-3q2.73-.18,6.84-.66a25,25,0,0,1,.18,2.85,9,9,0,0,1-.76,3.21,9.66,9.66,0,0,1-2.28,3.39A4.69,4.69,0,0,1,76,31.92a6,6,0,0,1-5-2.43,11,11,0,0,1-1.88-6.87,22.3,22.3,0,0,1,.81-6.12,12,12,0,0,1,2.4-4.68A4.72,4.72,0,0,1,76,10a5.74,5.74,0,0,1,3.72,1.44,5.27,5.27,0,0,1,1.46,2.15,7.81,7.81,0,0,1,.55,2.92,16.08,16.08,0,0,1-.27,3Z" transform="translate(-2.31 -9.9)"></path>
+                <path d="M90.68,32.1a5.89,5.89,0,0,1-4.83-2.56q-2-2.57-2-7.8A15.42,15.42,0,0,1,86,13.2q2.14-3.3,5-3.3a5.85,5.85,0,0,1,4.85,2.58q1.93,2.58,1.93,7.77a15.39,15.39,0,0,1-2.16,8.52Q93.54,32.1,90.68,32.1ZM88.83,15.8a15.42,15.42,0,0,0-1,5.85,12.5,12.5,0,0,0,.83,5.22c.55,1.13,1.23,1.69,2,1.69s1.55-.78,2.18-2.34a15.74,15.74,0,0,0,.94-5.86,12.86,12.86,0,0,0-.79-5.21c-.53-1.12-1.19-1.68-2-1.68S89.47,14.25,88.83,15.8Z" transform="translate(-2.31 -9.9)"></path>
+              </g>
+            </svg>
+            <div class="card-title" style="margin: 0;">ПОИСК АНИМЕ</div>
+          </div>
+
+          <!-- Раздельный выбор источника поиска -->
+          <div class="search-sources-toggle">
+            <button type="button" class="source-pill active" id="btnSourceMe" data-source="animego.me">
+              📺 AnimeGO.me (Основной)
+            </button>
+            <button type="button" class="source-pill" id="btnSourceCo" data-source="animego.co">
+              🌐 AnimeGO.co (РФ)
+            </button>
+          </div>
+
+          <div class="search-input-group">
+            <input type="text" class="input-field" id="animeSearchInput" placeholder="Поиск по AnimeGO.me..." autocomplete="off">
+            <button class="btn-action-primary" id="btnSearchAnime">Найти</button>
+          </div>
+
+          <div style="border-top: 1px solid var(--border-color); padding-top: 10px; margin-top: 6px;">
+            <div class="card-title" style="margin-bottom: 6px;">ИЛИ ВСТАВЬТЕ ССЫЛКУ С САЙТА:</div>
+            <div class="search-input-group">
+              <input type="url" class="input-field" id="animeUrlInput" placeholder="https://animego.../anime/..." autocomplete="off">
+              <button class="btn-action-primary" id="btnOpenUrl" style="background: rgba(255,255,255,0.12);">Открыть</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Список результатов -->
+        <section class="card" style="flex: 1;">
+          <div class="card-title">РЕЗУЛЬТАТЫ ПОИСКА</div>
+          <div class="results-list" id="searchResultsList">
+            <div class="empty-placeholder">
+              <svg class="animego-empty-logo" viewBox="0 0 95.55 22.53" role="img" aria-label="AnimeGO">
+                <g class="logo-anime">
+                  <path d="M12.81,30.78l-.69-4.17-4.47.18L6.51,32.43l-4.2-.36L7.68,10.32l5.55.48,3.93,20.34ZM10.17,14.25,8.28,23.58l3.36-.12Z" transform="translate(-2.31 -9.9)"></path>
+                  <path d="M25.41,16.8q4,0,4,6.6,0,3.48-.39,7.38l-3.51-.33q.33-3.42.33-6.91c0-2.33-.33-3.5-1-3.5-.32,0-.73.81-1.23,2.42a21.53,21.53,0,0,0-.93,4.72q.06,1.23.24,4.44l-3.51-.33q-.33-4.23-.33-7.44t.18-5.76l2.22.24q.06.24.45,2Q23.64,16.8,25.41,16.8Z" transform="translate(-2.31 -9.9)"></path>
+                  <path d="M32.73,11.49l3.36.39-.3,3.36-3.36-.42Zm-.24,5.28,3.42.33V31.5l-3.42-.33Z" transform="translate(-2.31 -9.9)"></path>
+                  <path d="M45.63,17.7A3.29,3.29,0,0,1,48.42,19q1.56-2.28,3.09-2.28,4.17,0,4.17,6.27a74.35,74.35,0,0,1-.6,8.58l-3.48-.3q.57-5.61.57-8.55t-1-2.94q-.42,0-1,1.35a10.64,10.64,0,0,0-.75,3q-.06,3.75-.24,6.69l-3.51-.33q.24-4.23.24-7t-.75-2.73c-.32,0-.73.56-1.24,1.67a14.47,14.47,0,0,0-1.1,3.49q0,2.76.27,5.7l-3.51-.33q-.33-4.23-.33-7.71t.18-6.51l2.49.18q.18.81.51,2.94Q44.07,17.7,45.63,17.7Z" transform="translate(-2.31 -9.9)"></path>
+                  <path d="M62.43,28.92q1.14,0,2.43-2.19l2.28,1.35a15.91,15.91,0,0,1-1.09,1.68,5.54,5.54,0,0,1-1.58,1.32,4.46,4.46,0,0,1-2.34.63A3.93,3.93,0,0,1,59,30.11a6.74,6.74,0,0,1-1.29-4.34A15.16,15.16,0,0,1,58.77,20a5.69,5.69,0,0,1,1.73-2.29,3.71,3.71,0,0,1,2.31-.89,4.11,4.11,0,0,1,1.9.38,4.29,4.29,0,0,1,1.16.84,4,4,0,0,1,.76,1.36,13.78,13.78,0,0,1,.47,1.47,12.11,12.11,0,0,1,.22,1.65q.12,1.44.12,2.61a51.36,51.36,0,0,1-6.21,1.2,5.71,5.71,0,0,0,.42,1.92Q62,28.92,62.43,28.92Zm.66-9.21c-.44,0-.83.44-1.18,1.32a9.6,9.6,0,0,0-.62,3.06q1.59-.33,2.76-.63Q64.05,19.71,63.09,19.71Z" transform="translate(-2.31 -9.9)"></path>
+                </g>
+                <g class="logo-go">
+                  <path d="M77.91,19.17a11.17,11.17,0,0,0,.12-2,6.88,6.88,0,0,0-.45-2.52c-.3-.77-.74-1.16-1.32-1.16s-1.38.91-2,2.72a16.86,16.86,0,0,0-1,5.82,15.59,15.59,0,0,0,.6,4.86c.4,1.17,1,1.75,1.77,1.75a1.92,1.92,0,0,0,1.77-1.08,9.54,9.54,0,0,0,.9-3.18,13.76,13.76,0,0,0-2.31.21l-.63-3q2.73-.18,6.84-.66a25,25,0,0,1,.18,2.85,9,9,0,0,1-.76,3.21,9.66,9.66,0,0,1-2.28,3.39A4.69,4.69,0,0,1,76,31.92a6,6,0,0,1-5-2.43,11,11,0,0,1-1.88-6.87,22.3,22.3,0,0,1,.81-6.12,12,12,0,0,1,2.4-4.68A4.72,4.72,0,0,1,76,10a5.74,5.74,0,0,1,3.72,1.44,5.27,5.27,0,0,1,1.46,2.15,7.81,7.81,0,0,1,.55,2.92,16.08,16.08,0,0,1-.27,3Z" transform="translate(-2.31 -9.9)"></path>
+                  <path d="M90.68,32.1a5.89,5.89,0,0,1-4.83-2.56q-2-2.57-2-7.8A15.42,15.42,0,0,1,86,13.2q2.14-3.3,5-3.3a5.85,5.85,0,0,1,4.85,2.58q1.93,2.58,1.93,7.77a15.39,15.39,0,0,1-2.16,8.52Q93.54,32.1,90.68,32.1ZM88.83,15.8a15.42,15.42,0,0,0-1,5.85,12.5,12.5,0,0,0,.83,5.22c.55,1.13,1.23,1.69,2,1.69s1.55-.78,2.18-2.34a15.74,15.74,0,0,0,.94-5.86,12.86,12.86,0,0,0-.79-5.21c-.53-1.12-1.19-1.68-2-1.68S89.47,14.25,88.83,15.8Z" transform="translate(-2.31 -9.9)"></path>
+                </g>
+              </svg>
+              <span>Введите название аниме выше, чтобы найти все доступные сезоны и фильмы.</span>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
 
-  <!-- Всплывающее уведомление -->
+  <!-- Модальное окно выбора сезона/версии зеркала -->
+  <div class="mirror-modal-overlay" id="mirrorModalOverlay">
+    <div class="mirror-modal-card">
+      <div class="mirror-modal-header">
+        <div class="mirror-modal-title" id="mirrorModalTitle">Выбор сезона на зеркале</div>
+        <button class="mirror-modal-close" id="btnMirrorModalClose">✕</button>
+      </div>
+      <div class="mirror-modal-subtitle" id="mirrorModalSubtitle">Выберите подходящий тайтл/сезон для открытия на ПК:</div>
+      <div id="mirrorModalSpinner" class="spinner" style="display: none; margin: 20px auto;"></div>
+      <div class="mirror-options-list" id="mirrorOptionsList"></div>
+    </div>
+  </div>
+
+  <!-- Всплывающий тост -->
   <div class="toast" id="toast">
     <span id="toastText">Команда отправлена</span>
   </div>
@@ -455,17 +1125,74 @@
   <script>
     (function () {
       let currentRoom = null;
+      let peer = null;
+      let activePeerConn = null;
+      let p2pInterval = null;
+      let isConnectingHost = false;
       let toastTimer = null;
+      let currentEpisodeNumber = 1;
 
+      // DOM элементы
       const roomBadge = document.getElementById('roomBadge');
       const roomName = document.getElementById('roomName');
       const statusDot = document.getElementById('statusDot');
       const roomInputCard = document.getElementById('roomInputCard');
-      const controlsArea = document.getElementById('controlsArea');
+      const mainContent = document.getElementById('mainContent');
       const roomInput = document.getElementById('roomInput');
       const btnConnect = document.getElementById('btnConnect');
       const toast = document.getElementById('toast');
       const toastText = document.getElementById('toastText');
+      const startPlayerBanner = document.getElementById('startPlayerBanner');
+
+      // Вкладки
+      const tabBtnRemote = document.getElementById('tabBtnRemote');
+      const tabBtnSearch = document.getElementById('tabBtnSearch');
+      const tabContentRemote = document.getElementById('tabContentRemote');
+      const tabContentSearch = document.getElementById('tabContentSearch');
+
+      // Инфо об аниме
+      const currentAnimeTitle = document.getElementById('currentAnimeTitle');
+      const currentEpisodeTag = document.getElementById('currentEpisodeTag');
+      const episodesPillsRow = document.getElementById('episodesPillsRow');
+      const translationsSection = document.getElementById('translationsSection');
+      const translationsPillsRow = document.getElementById('translationsPillsRow');
+      const providersSection = document.getElementById('providersSection');
+      const providersPillsRow = document.getElementById('providersPillsRow');
+      const franchiseSection = document.getElementById('franchiseSection');
+      const franchisePillsRow = document.getElementById('franchisePillsRow');
+      const qualityPillsRow = document.getElementById('qualityPillsRow');
+
+      // Поиск
+      const btnSourceMe = document.getElementById('btnSourceMe');
+      const btnSourceCo = document.getElementById('btnSourceCo');
+      const animeSearchInput = document.getElementById('animeSearchInput');
+      const btnSearchAnime = document.getElementById('btnSearchAnime');
+      const animeUrlInput = document.getElementById('animeUrlInput');
+      const btnOpenUrl = document.getElementById('btnOpenUrl');
+      const searchResultsList = document.getElementById('searchResultsList');
+
+      // Модальное окно выбора зеркала
+      const mirrorModalOverlay = document.getElementById('mirrorModalOverlay');
+      const mirrorModalTitle = document.getElementById('mirrorModalTitle');
+      const mirrorModalSubtitle = document.getElementById('mirrorModalSubtitle');
+      const mirrorModalSpinner = document.getElementById('mirrorModalSpinner');
+      const mirrorOptionsList = document.getElementById('mirrorOptionsList');
+      const btnMirrorModalClose = document.getElementById('btnMirrorModalClose');
+
+      let currentSearchSource = 'animego.me';
+
+      function cleanAnimeTitle(raw) {
+        if (!raw) return '';
+        return String(raw)
+          .replace(/<[^>]+>/g, '')
+          .replace(/AnimeGO['"]*\s*\/?>/gi, '')
+          .replace(/^AnimeGO\s*[-|:]?\s*/i, '')
+          .replace(/\s*[-|:]?\s*AnimeGO.*$/i, '')
+          .replace(/^\s*Смотреть\s+(?:аниме\s+)?(?:бесплатно\s+)?(?:в\s+хорошем\s+качестве\s+)?/i, '')
+          .replace(/\s*(?:смотреть\s+онлайн|онлайн|все\s+серии).*$/i, '')
+          .replace(/^[«"'\s]+|[»"'\s]+$/g, '')
+          .trim();
+      }
 
       function showToast(text) {
         toastText.textContent = text;
@@ -473,18 +1200,79 @@
         if (toastTimer) clearTimeout(toastTimer);
         toastTimer = setTimeout(() => {
           toast.classList.remove('visible');
-        }, 1500);
+        }, 1600);
       }
+
+      function switchTab(tab) {
+        if (tab === 'search') {
+          tabBtnSearch.classList.add('active');
+          tabBtnRemote.classList.remove('active');
+          tabContentSearch.classList.add('active');
+          tabContentRemote.classList.remove('active');
+        } else {
+          tabBtnRemote.classList.add('active');
+          tabBtnSearch.classList.remove('active');
+          tabContentRemote.classList.add('active');
+          tabContentSearch.classList.remove('active');
+        }
+      }
+
+      tabBtnRemote.addEventListener('click', () => switchTab('remote'));
+      tabBtnSearch.addEventListener('click', () => switchTab('search'));
+
+      // Переключение источника поиска
+      btnSourceMe?.addEventListener('click', () => {
+        currentSearchSource = 'animego.me';
+        btnSourceMe.classList.add('active');
+        btnSourceCo.classList.remove('active');
+        animeSearchInput.placeholder = 'Поиск по AnimeGO.me...';
+        showToast('Поиск: AnimeGO.me (Основной)');
+      });
+
+      btnSourceCo?.addEventListener('click', () => {
+        currentSearchSource = 'animego.co';
+        btnSourceCo.classList.add('active');
+        btnSourceMe.classList.remove('active');
+        animeSearchInput.placeholder = 'Поиск по AnimeGO.co (РФ)...';
+        showToast('Поиск: AnimeGO.co (Зеркало РФ)');
+      });
+
+      // Безопасная вибрация (только при активном взаимодействии пользователя)
+      function safeVibrate(pattern = 35) {
+        try {
+          if (navigator.vibrate && (navigator.userActivation ? navigator.userActivation.hasBeenActive : true)) {
+            navigator.vibrate(pattern);
+          }
+        } catch (e) {}
+      }
+
+      // Запуск неинициализированного плеера
+      startPlayerBanner.addEventListener('click', () => {
+        safeVibrate(40);
+        showToast('Запуск плеера на ПК...');
+        sendCommand('START_PLAYER', {}, true);
+        startPlayerBanner.classList.remove('visible');
+      });
 
       function getRoomFromUrl() {
         const params = new URLSearchParams(window.location.search);
-        return params.get('room') || localStorage.getItem('animego_last_room');
+        let r = params.get('room') || localStorage.getItem('animego_last_room');
+        if (r && (r.includes('510iyjpv9') || r.includes('6i22fynxm'))) {
+          localStorage.removeItem('animego_last_room');
+          r = null;
+        }
+        return r;
       }
 
       function setRoom(room) {
+        if (room && (room.includes('510iyjpv9') || room.includes('6i22fynxm'))) {
+          localStorage.removeItem('animego_last_room');
+          room = null;
+        }
+
         if (!room) {
           roomInputCard.classList.add('visible');
-          controlsArea.style.display = 'none';
+          mainContent.style.display = 'none';
           roomName.textContent = 'Не подключен';
           statusDot.classList.add('offline');
           return;
@@ -493,7 +1281,6 @@
         currentRoom = room.trim();
         localStorage.setItem('animego_last_room', currentRoom);
 
-        // Обновляем URL без перезагрузки
         const url = new URL(window.location.href);
         url.searchParams.set('room', currentRoom);
         window.history.replaceState({}, '', url.toString());
@@ -501,21 +1288,565 @@
         roomName.textContent = currentRoom.length > 14 ? currentRoom.slice(0, 12) + '…' : currentRoom;
         statusDot.classList.remove('offline');
         roomInputCard.classList.remove('visible');
-        controlsArea.style.display = 'flex';
+        mainContent.style.display = 'flex';
 
+        connectP2P(currentRoom);
         showToast('Подключено к ' + currentRoom);
       }
 
-      // Отправка команды через ntfy.sh
-      async function sendCommand(command, extra = {}) {
+      const P2P_ICE_SERVERS = [
+        { urls: 'stun:edgemq.online:3478' },
+        {
+          urls: [
+            'turn:edgemq.online:3478?transport=udp',
+            'turn:edgemq.online:3478?transport=tcp'
+          ],
+          username: 'animego',
+          credential: 'animego2026_remote'
+        },
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' }
+      ];
+
+      let pendingConn = null;
+      let connectTimeoutTimer = null;
+
+      // Подключение через WebRTC DataChannel
+      function connectP2P(room) {
+        if (p2pInterval) clearInterval(p2pInterval);
+        if (connectTimeoutTimer) clearTimeout(connectTimeoutTimer);
+        if (pendingConn) {
+          try { pendingConn.close(); } catch (e) {}
+          pendingConn = null;
+        }
+        if (peer) {
+          try { peer.destroy(); } catch (e) {}
+          peer = null;
+          activePeerConn = null;
+        }
+
+        if (typeof Peer === 'undefined') {
+          console.warn('[P2P Remote] PeerJS не загружен');
+          return;
+        }
+
+        try {
+          peer = new Peer({
+            debug: 1,
+            config: {
+              iceServers: P2P_ICE_SERVERS,
+              sdpSemantics: 'unified-plan'
+            }
+          });
+
+          peer.on('open', (id) => {
+            console.log('[P2P Remote] Peer инициализирован:', id);
+            attemptConnectToHost(room);
+          });
+
+          peer.on('disconnected', () => {
+            console.warn('[P2P Remote] Отключен от сигнального сервера, переподключение...');
+            try { peer.reconnect(); } catch (e) {}
+          });
+
+          peer.on('error', (err) => {
+            console.warn('[P2P Remote] PeerJS статус/ошибка:', err.type || err);
+            const errType = err && err.type ? err.type : String(err);
+            if (errType === 'peer-unavailable' || errType === 'network' || errType === 'server-error' || errType === 'socket-error') {
+              statusDot.classList.add('offline');
+              statusDot.style.background = '#eab308';
+              statusDot.style.boxShadow = '0 0 8px #eab308';
+              if (roomName) {
+                roomName.textContent = '⏳ Ожидание ПК...';
+              }
+            }
+          });
+
+          // Периодический мониторинг соединения (проверяем каждые 5 сек)
+          p2pInterval = setInterval(() => {
+            if (currentRoom && (!activePeerConn || !activePeerConn.open)) {
+              if (pendingConn) return; // Не прерываем текущий процесс согласования
+              if (peer && !peer.destroyed && peer.open) {
+                attemptConnectToHost(currentRoom);
+              } else if (peer && peer.disconnected && !peer.destroyed) {
+                try { peer.reconnect(); } catch (e) {}
+              }
+            }
+          }, 5000);
+        } catch (e) {
+          console.error('[P2P Remote] Инициализация P2P не удалась:', e);
+        }
+      }
+
+      function attemptConnectToHost(room) {
+        if (!peer || peer.destroyed || !peer.open) return;
+        if (activePeerConn && activePeerConn.open) return;
+        if (pendingConn) return;
+
+        console.log('[P2P Remote] Попытка прямого соединения с ПК:', room);
+        if (roomName && !activePeerConn) {
+          roomName.textContent = '⏳ Подключение к ПК...';
+        }
+
+        const conn = peer.connect(room, {
+          reliable: true,
+          serialization: 'json'
+        });
+        pendingConn = conn;
+
+        if (conn.peerConnection) {
+          conn.peerConnection.onconnectionstatechange = () => {
+            console.log('[P2P Remote] WebRTC State:', conn.peerConnection.connectionState);
+          };
+          conn.peerConnection.oniceconnectionstatechange = () => {
+            console.log('[P2P Remote] WebRTC ICE State:', conn.peerConnection.iceConnectionState);
+          };
+        }
+
+        if (connectTimeoutTimer) clearTimeout(connectTimeoutTimer);
+        connectTimeoutTimer = setTimeout(() => {
+          if (pendingConn === conn && (!conn.open)) {
+            console.warn('[P2P Remote] Таймаут установки соединения (12с), повтор...');
+            try { conn.close(); } catch (e) {}
+            pendingConn = null;
+          }
+        }, 12000);
+
+        const onOpen = () => {
+          if (connectTimeoutTimer) clearTimeout(connectTimeoutTimer);
+          pendingConn = null;
+          activePeerConn = conn;
+          statusDot.classList.remove('offline');
+          statusDot.style.background = '#10b981';
+          statusDot.style.boxShadow = '0 0 10px #10b981';
+          showToast('🟢 Пульт подключен');
+          if (roomName) {
+            roomName.textContent = currentRoom.length > 12 ? currentRoom.slice(0, 10) + '…' : currentRoom;
+            roomName.title = 'WebRTC P2P соединение';
+          }
+          sendCommand('GET_CURRENT_INFO', {}, false);
+        };
+
+        if (conn.open) {
+          onOpen();
+        } else {
+          conn.on('open', onOpen);
+        }
+
+        conn.on('data', (data) => {
+          let message = data;
+          if (typeof data === 'string') {
+            try { message = JSON.parse(data); } catch (e) {}
+          }
+          handleServerEvent(message);
+        });
+
+        conn.on('close', () => {
+          if (connectTimeoutTimer) clearTimeout(connectTimeoutTimer);
+          if (pendingConn === conn) pendingConn = null;
+          if (activePeerConn === conn) activePeerConn = null;
+          statusDot.classList.add('offline');
+          statusDot.style.background = '#eab308';
+          statusDot.style.boxShadow = '0 0 8px #eab308';
+          if (roomName && currentRoom) {
+            roomName.textContent = '⏳ Ожидание ПК...';
+          }
+        });
+
+        conn.on('error', (err) => {
+          if (connectTimeoutTimer) clearTimeout(connectTimeoutTimer);
+          if (pendingConn === conn) pendingConn = null;
+          if (activePeerConn === conn) activePeerConn = null;
+          console.warn('[P2P Remote] Ошибка канала связи:', err);
+        });
+      }
+
+      // Обработка данных от компьютера
+      function handleServerEvent(msg) {
+        if (!msg || typeof msg !== 'object') return;
+
+        if (msg.type === 'CURRENT_INFO') {
+          if (msg.title) {
+            currentAnimeTitle.textContent = cleanAnimeTitle(msg.title);
+          }
+
+          if (msg.currentEpisode) {
+            currentEpisodeNumber = msg.currentEpisode;
+            currentEpisodeTag.textContent = `Серия ${msg.currentEpisode}`;
+          }
+
+          // Статус стартовой кнопки
+          if (msg.isPlayerStarted === false) {
+            startPlayerBanner.classList.add('visible');
+          } else {
+            startPlayerBanner.classList.remove('visible');
+          }
+
+          // Серии
+          if (Array.isArray(msg.episodes) && msg.episodes.length > 0) {
+            renderEpisodePills(msg.episodes, currentEpisodeNumber);
+          }
+
+          // Зеркало сайта и АВТООПРЕДЕЛЕНИЕ
+          const isCo = Boolean((msg.mirror && msg.mirror.includes('animego.co')) || msg.isMirrorCo);
+          const badge = document.getElementById('currentMirrorBadge');
+          const switchBtn = document.getElementById('btnSwitchMirror');
+          if (badge) {
+            badge.textContent = isCo ? 'animego.co (РФ) 🇷🇺' : 'animego.me';
+            badge.style.color = isCo ? '#ffab40' : '#38ef7d';
+          }
+          if (switchBtn) {
+            switchBtn.textContent = isCo ? '🔄 На animego.me' : '🔄 Зеркало РФ (animego.co)';
+          }
+
+          // Автоматическое переключение вкладки поиска на активный домен пользователя
+          currentSearchSource = isCo ? 'animego.co' : 'animego.me';
+          if (isCo) {
+            btnSourceCo?.classList.add('active');
+            btnSourceMe?.classList.remove('active');
+            if (animeSearchInput) animeSearchInput.placeholder = 'Поиск по AnimeGO.co (РФ)...';
+          } else {
+            btnSourceMe?.classList.add('active');
+            btnSourceCo?.classList.remove('active');
+            if (animeSearchInput) animeSearchInput.placeholder = 'Поиск по AnimeGO.me...';
+          }
+
+          // Озвучки
+          translationsSection.style.display = 'block';
+          if (Array.isArray(msg.translations) && msg.translations.length > 0) {
+            renderTranslations(msg.translations);
+          } else if (isCo) {
+            renderTranslations([{ id: 'kodik', name: 'Kodik (Все озвучки)', active: true }]);
+          }
+
+          // Плееры: на animego.co ТОЛЬКО Kodik!
+          providersSection.style.display = 'block';
+          if (isCo) {
+            renderProviders([{ id: 'kodik', name: 'Kodik (Основной)', active: true }]);
+          } else {
+            renderProviders(msg.providers);
+          }
+
+          // Франшиза
+          if (Array.isArray(msg.franchise) && msg.franchise.length > 0) {
+            franchiseSection.style.display = 'block';
+            renderFranchise(msg.franchise);
+          } else {
+            franchiseSection.style.display = 'none';
+          }
+
+          // Качество: у Kodik только 720p, 480p, 360p (без 1080p)
+          const isKodik = Boolean(
+            isCo ||
+            msg.isKodik ||
+            (msg.providers && msg.providers.some(p => p.active && (p.id === 'kodik' || p.name?.toLowerCase().includes('kodik'))))
+          );
+          renderQualities(isKodik);
+        }
+
+        if (msg.type === 'SEARCH_RESULTS') {
+          renderSearchResults(msg.results || [], msg.source);
+        }
+
+        if (msg.type === 'MIRROR_OPTIONS') {
+          renderMirrorOptions(msg.options || [], msg.targetMirror, msg.query);
+        }
+      }
+
+      // Открытие модалки выбора зеркала
+      function openMirrorModal(targetMirror) {
+        const isCo = targetMirror.includes('animego.co');
+        mirrorModalTitle.textContent = isCo ? 'Выбор на animego.co (РФ)' : 'Выбор на animego.me';
+        mirrorModalSubtitle.textContent = 'Поиск доступных сезонов и фильмов на зеркале...';
+        mirrorModalSpinner.style.display = 'block';
+        mirrorOptionsList.innerHTML = '';
+        mirrorModalOverlay.classList.add('visible');
+      }
+
+      // Закрытие модалки выбора зеркала
+      function closeMirrorModal() {
+        mirrorModalOverlay.classList.remove('visible');
+      }
+
+      btnMirrorModalClose?.addEventListener('click', closeMirrorModal);
+      mirrorModalOverlay?.addEventListener('click', (e) => {
+        if (e.target === mirrorModalOverlay) closeMirrorModal();
+      });
+
+      // Рендер вариантов для зеркала
+      function renderMirrorOptions(options, targetMirror, query) {
+        mirrorModalSpinner.style.display = 'none';
+        mirrorOptionsList.innerHTML = '';
+
+        if (!options || options.length === 0) {
+          mirrorModalSubtitle.textContent = 'Точных совпадений на зеркале не найдено.';
+          const emptyItem = document.createElement('div');
+          emptyItem.style.cssText = 'text-align: center; padding: 14px; font-size: 13px; color: var(--text-secondary);';
+          emptyItem.innerHTML = `
+            <div style="margin-bottom: 12px;">Не удалось найти сезоны для "${query || 'тайтла'}".</div>
+            <button class="btn-action-primary" id="btnGoToSearch" style="margin: 0 auto;">🔍 Искать вручную</button>
+          `;
+          mirrorOptionsList.appendChild(emptyItem);
+
+          emptyItem.querySelector('#btnGoToSearch')?.addEventListener('click', () => {
+            closeMirrorModal();
+            switchTab('search');
+            if (targetMirror.includes('animego.co')) {
+              btnSourceCo.click();
+            } else {
+              btnSourceMe.click();
+            }
+            if (query) {
+              animeSearchInput.value = query;
+              doSearch();
+            }
+          });
+          return;
+        }
+
+        mirrorModalSubtitle.textContent = `Найдено вариантов: ${options.length}. Нажмите для выбора:`;
+
+        options.forEach((opt) => {
+          const item = document.createElement('div');
+          item.className = 'mirror-option-item';
+
+          const title = cleanAnimeTitle(opt.title);
+          const fallbackPoster = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2260%22%20height%3D%2285%22%20viewBox%3D%220%200%2060%2085%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%231e293b%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23ffffff%22%20font-family%3D%22sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2210%22%3EAnime%3C%2Ftext%3E%3C%2Fsvg%3E";
+
+          const img = document.createElement('img');
+          img.className = 'mirror-option-poster';
+          img.src = opt.poster || fallbackPoster;
+          img.alt = title;
+          img.loading = 'lazy';
+          img.onerror = function () {
+            this.onerror = null;
+            this.src = fallbackPoster;
+          };
+
+          const info = document.createElement('div');
+          info.className = 'mirror-option-info';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'mirror-option-title';
+          titleEl.textContent = title;
+
+          const metaEl = document.createElement('div');
+          metaEl.className = 'mirror-option-meta';
+          metaEl.textContent = opt.meta || (opt.source === 'animego.co' ? 'animego.co' : 'animego.me');
+
+          info.appendChild(titleEl);
+          info.appendChild(metaEl);
+
+          const arrow = document.createElement('span');
+          arrow.style.cssText = 'font-size: 16px; color: var(--accent); margin-left: auto; flex-shrink: 0;';
+          arrow.textContent = '➔';
+
+          item.appendChild(img);
+          item.appendChild(info);
+          item.appendChild(arrow);
+
+          item.addEventListener('click', () => {
+            safeVibrate(40);
+            closeMirrorModal();
+            showToast(`Открываем: ${title}`);
+            sendCommand('OPEN_ANIME', { url: opt.url, mirror: opt.source || targetMirror }, true);
+            switchTab('remote');
+            currentAnimeTitle.textContent = title;
+            currentEpisodeTag.textContent = 'Загрузка...';
+          });
+
+          mirrorOptionsList.appendChild(item);
+        });
+      }
+
+      // Рендер кнопок серий
+      function renderEpisodePills(episodes, currentEp) {
+        episodesPillsRow.innerHTML = '';
+        episodes.forEach((num) => {
+          const pill = document.createElement('div');
+          pill.className = `chip-item ${num === currentEp ? 'active' : ''}`;
+          pill.textContent = num;
+          pill.addEventListener('click', () => {
+            safeVibrate(35);
+            document.querySelectorAll('#episodesPillsRow .chip-item').forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentEpisodeTag.textContent = `Серия ${num}`;
+            sendCommand('CHOOSE_EPISODE', { episode: num }, true);
+          });
+          episodesPillsRow.appendChild(pill);
+        });
+
+        const activePill = episodesPillsRow.querySelector('.chip-item.active');
+        if (activePill) {
+          activePill.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+      }
+
+      // Рендер озвучек
+      function renderTranslations(translations) {
+        translationsPillsRow.innerHTML = '';
+        translations.forEach((item) => {
+          const pill = document.createElement('div');
+          pill.className = `chip-item purple ${item.active ? 'active' : ''}`;
+          pill.textContent = item.name;
+          pill.addEventListener('click', () => {
+            safeVibrate(35);
+            document.querySelectorAll('#translationsPillsRow .chip-item').forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+            showToast(`Озвучка: ${item.name}`);
+            sendCommand('CHOOSE_TRANSLATION', { id: item.id, title: item.name }, true);
+          });
+          translationsPillsRow.appendChild(pill);
+        });
+      }
+
+      // Рендер плееров
+      function renderProviders(providers) {
+        providersPillsRow.innerHTML = '';
+        const isCo = currentMirrorBadge?.textContent.includes('animego.co') || currentSearchSource === 'animego.co';
+        const list = isCo
+          ? [{ id: 'kodik', name: 'Kodik (Только Kodik)', active: true }]
+          : ((Array.isArray(providers) && providers.length > 0)
+              ? providers
+              : [
+                  { id: 'aniboom', name: 'AniBoom', active: true },
+                  { id: 'kodik', name: 'Kodik', active: false },
+                  { id: 'sibnet', name: 'Sibnet', active: false }
+                ]);
+
+        list.forEach((item) => {
+          const pill = document.createElement('div');
+          pill.className = `chip-item ${item.active ? 'active' : ''}`;
+          pill.textContent = item.name;
+          pill.setAttribute('data-provider', item.name);
+          pill.addEventListener('click', () => {
+            safeVibrate(35);
+            if (isCo) {
+              showToast('На animego.co доступен только плеер Kodik');
+              return;
+            }
+            providersPillsRow.querySelectorAll('.chip-item').forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+            showToast(`Плеер: ${item.name}`);
+            sendCommand('CHOOSE_PROVIDER', { id: item.id || item.name, title: item.name }, true);
+          });
+          providersPillsRow.appendChild(pill);
+        });
+      }
+
+      // Рендер франшизы (другие сезоны)
+      function renderFranchise(franchise) {
+        franchisePillsRow.innerHTML = '';
+        franchise.forEach((item) => {
+          const pill = document.createElement('div');
+          pill.className = 'chip-item';
+          pill.textContent = cleanAnimeTitle(item.title);
+          pill.addEventListener('click', () => {
+            safeVibrate(40);
+            showToast(`Открываем: ${item.title}`);
+            sendCommand('OPEN_ANIME', { url: item.url }, true);
+          });
+          franchisePillsRow.appendChild(pill);
+        });
+      }
+
+      // Качество видео (у Kodik: 720p, 480p, 360p; у других плееров: 1080p, 720p, 480p, 360p)
+      function renderQualities(isKodik = false) {
+        qualityPillsRow.innerHTML = '';
+        const list = isKodik ? ['720p', '480p', '360p'] : ['1080p', '720p', '480p', '360p'];
+        list.forEach((q, idx) => {
+          const pill = document.createElement('div');
+          pill.className = `chip-item ${idx === 0 ? 'active' : ''}`;
+          pill.setAttribute('data-quality', q);
+          pill.textContent = q;
+          pill.addEventListener('click', () => {
+            safeVibrate(35);
+            qualityPillsRow.querySelectorAll('.chip-item').forEach((p) => p.classList.remove('active'));
+            pill.classList.add('active');
+            showToast(`Качество: ${q}`);
+            sendCommand('CHOOSE_QUALITY', { quality: q }, true);
+          });
+          qualityPillsRow.appendChild(pill);
+        });
+      }
+      renderQualities(false);
+
+      // Рендер результатов поиска
+      function renderSearchResults(results, source) {
+        searchResultsList.innerHTML = '';
+
+        if (!results || results.length === 0) {
+          searchResultsList.innerHTML = `
+            <div class="empty-placeholder">По вашему запросу ничего не найдено. Попробуйте переключить источник (AnimeGO.me / AnimeGO.co).</div>
+          `;
+          return;
+        }
+
+        results.forEach((item) => {
+          const card = document.createElement('div');
+          card.className = 'anime-card-item';
+
+          const title = cleanAnimeTitle(item.title);
+          const fallbackPoster = "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2260%22%20height%3D%2285%22%20viewBox%3D%220%200%2060%2085%22%3E%3Crect%20width%3D%22100%25%22%20height%3D%22100%25%22%20fill%3D%22%231e293b%22%2F%3E%3Ctext%20x%3D%2250%25%22%20y%3D%2250%25%22%20dominant-baseline%3D%22middle%22%20text-anchor%3D%22middle%22%20fill%3D%22%23ffffff%22%20font-family%3D%22sans-serif%22%20font-weight%3D%22700%22%20font-size%3D%2210%22%3EAnime%3C%2Ftext%3E%3C%2Fsvg%3E";
+          const posterSrc = item.poster || fallbackPoster;
+          const itemSource = item.source || source || currentSearchSource;
+          const sourceBadge = itemSource === 'animego.co' ? '🇷🇺 animego.co' : 'animego.me';
+
+          const img = document.createElement('img');
+          img.className = 'anime-card-poster';
+          img.src = posterSrc;
+          img.alt = title;
+          img.loading = 'lazy';
+          img.onerror = function () {
+            this.onerror = null;
+            this.src = fallbackPoster;
+          };
+
+          const info = document.createElement('div');
+          info.className = 'anime-card-info';
+
+          const titleEl = document.createElement('div');
+          titleEl.className = 'anime-card-title';
+          titleEl.textContent = title;
+
+          const metaEl = document.createElement('div');
+          metaEl.className = 'anime-card-meta';
+          metaEl.innerHTML = `${item.meta || 'Аниме'} • <span style="color: ${itemSource === 'animego.co' ? '#ffab40' : '#38ef7d'}; font-weight: 600;">${sourceBadge}</span>`;
+
+          const watchBtn = document.createElement('button');
+          watchBtn.className = 'btn-watch-anime';
+          watchBtn.textContent = '▶ Смотреть на ПК';
+
+          info.appendChild(titleEl);
+          info.appendChild(metaEl);
+          info.appendChild(watchBtn);
+
+          card.appendChild(img);
+          card.appendChild(info);
+
+          card.addEventListener('click', () => {
+            safeVibrate(40);
+            showToast(`Открываем: ${title}`);
+            sendCommand('OPEN_ANIME', { url: item.url, mirror: itemSource }, true);
+            switchTab('remote');
+            currentAnimeTitle.textContent = title;
+            currentEpisodeTag.textContent = 'Загрузка...';
+          });
+
+          searchResultsList.appendChild(card);
+        });
+      }
+
+      // Отправка команды на ПК через WebRTC P2P DataChannel
+      function sendCommand(command, extra = {}, allowVibrate = false) {
         if (!currentRoom) {
           showToast('Сначала введите код комнаты');
           return;
         }
 
-        // Виброотклик
-        if (navigator.vibrate) {
-          try { navigator.vibrate(35); } catch (e) {}
+        if (allowVibrate) {
+          safeVibrate(35);
         }
 
         const payload = {
@@ -526,47 +1857,92 @@
 
         const commandLabels = {
           'TOGGLE_PLAY': 'Пауза / Воспроизведение',
+          'PLAY': 'Воспроизведение',
+          'PAUSE': 'Пауза',
           'NEXT_EPISODE': 'Следующая серия',
           'PREV_EPISODE': 'Предыдущая серия',
-          'SEEK_BACK': 'Перемотка назад 10с',
-          'SEEK_FORWARD': 'Перемотка вперед 10с',
           'TOGGLE_FULLSCREEN': 'Полный экран',
-          'TOGGLE_MUTE': 'Звук вкл/выкл',
           'VOLUME_UP': 'Громкость +',
-          'VOLUME_DOWN': 'Громкость -'
+          'VOLUME_DOWN': 'Громкость -',
+          'TOGGLE_MUTE': 'Звук вкл/выкл',
+          'SEEK_BACK': '-10с',
+          'SEEK_FORWARD': '+10с',
+          'START_PLAYER': 'Запуск плеера'
         };
 
-        showToast(commandLabels[command] || 'Отправка команды...');
+        if (commandLabels[command]) {
+          showToast(commandLabels[command]);
+        }
 
-        try {
-          const res = await fetch(`https://ntfy.sh/${encodeURIComponent(currentRoom)}`, {
-            method: 'POST',
-            body: JSON.stringify(payload),
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          });
-
-          if (!res.ok) {
-            throw new Error(`Ошибка HTTP: ${res.status}`);
+        // Прямой WebRTC P2P DataChannel (0 задержки, без промежуточных серверов)
+        if (activePeerConn && activePeerConn.open) {
+          try {
+            activePeerConn.send(payload);
+            return;
+          } catch (p2pErr) {
+            console.warn('[P2P Remote] Ошибка отправки по P2P:', p2pErr);
           }
-        } catch (err) {
-          console.error('[AnimeGO Remote]', err);
-          showToast('Ошибка связи с сервером');
-          statusDot.classList.add('offline');
-          setTimeout(() => statusDot.classList.remove('offline'), 2000);
+        }
+
+        showToast('⏳ Соединение с ПК...');
+        statusDot.classList.add('offline');
+        if (peer && !peer.destroyed && peer.open && currentRoom) {
+          attemptConnectToHost(currentRoom);
         }
       }
 
-      // Навешиваем клики на все интерактивные кнопки
+      // Обработчики кнопок
       document.querySelectorAll('[data-cmd]').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           e.preventDefault();
           const cmd = btn.getAttribute('data-cmd');
           const seconds = btn.getAttribute('data-seconds');
           const extra = seconds ? { seconds: parseInt(seconds, 10) } : {};
-          sendCommand(cmd, extra);
+          sendCommand(cmd, extra, true);
         });
+      });
+
+      // Переключение зеркала на ПК через выбор сезонов в модальном окне
+      const btnSwitchMirror = document.getElementById('btnSwitchMirror');
+      const currentMirrorBadge = document.getElementById('currentMirrorBadge');
+
+      btnSwitchMirror?.addEventListener('click', () => {
+        const isCo = currentMirrorBadge?.textContent.includes('animego.co');
+        const targetMirror = isCo ? 'animego.me' : 'animego.co';
+        openMirrorModal(targetMirror);
+        sendCommand('FETCH_MIRROR_OPTIONS', { targetMirror }, true);
+      });
+
+      // Поиск аниме
+      function doSearch() {
+        const q = animeSearchInput.value.trim();
+        if (!q) return;
+        searchResultsList.innerHTML = '<div class="spinner"></div>';
+        sendCommand('SEARCH_ANIME', { query: q, source: currentSearchSource });
+      }
+
+      btnSearchAnime.addEventListener('click', doSearch);
+      animeSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') doSearch();
+      });
+
+      // Открытие по ссылке
+      btnOpenUrl.addEventListener('click', () => {
+        const u = animeUrlInput.value.trim();
+        if (!u) return;
+        sendCommand('OPEN_ANIME', { url: u });
+        switchTab('remote');
+        showToast('Открытие ссылки на ПК...');
+      });
+
+      animeUrlInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const u = animeUrlInput.value.trim();
+          if (u) {
+            sendCommand('OPEN_ANIME', { url: u });
+            switchTab('remote');
+          }
+        }
       });
 
       // Ручной ввод комнаты
@@ -582,7 +1958,7 @@
         }
       });
 
-      // Клик по бейджу комнаты для быстрой смены
+      // Смена комнаты по клику на бейдж
       roomBadge.addEventListener('click', () => {
         const next = prompt('Введите ID комнаты AnimeGO:', currentRoom || '');
         if (next !== null && next.trim()) {
@@ -590,7 +1966,7 @@
         }
       });
 
-      // Инициализация при загрузке
+      // Старт
       const initialRoom = getRoomFromUrl();
       setRoom(initialRoom);
     })();

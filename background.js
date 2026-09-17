@@ -73,5 +73,61 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     }
   }
+
+  // Ручное переключение зеркала (animego.me <-> animego.co)
+  if (message.action === 'SWITCH_MIRROR') {
+    const tabId = sender.tab?.id;
+    const currentUrl = sender.tab?.url || message.url;
+    if (tabId && currentUrl) {
+      try {
+        const u = new URL(currentUrl);
+        const isCo = u.hostname.includes('animego.co');
+        const targetHost = isCo ? 'animego.me' : 'animego.co';
+        const targetUrl = `${u.protocol}//${targetHost}${u.pathname}${u.search}${u.hash}`;
+        chrome.tabs.update(tabId, { url: targetUrl });
+      } catch (e) {}
+    }
+  }
+
+  // Проксирование кросс-доменных запросов (поиск между animego.me и animego.co в обход CORS)
+  if (message.action === 'FETCH_URL') {
+    fetch(message.url, message.options || {})
+      .then(async (res) => {
+        const text = await res.text();
+        sendResponse({ ok: res.ok, status: res.status, text });
+      })
+      .catch((err) => {
+        console.error('[AnimeGO Background] Ошибка FETCH_URL:', err);
+        sendResponse({ ok: false, status: 0, text: '', error: err.message || String(err) });
+      });
+    return true; // Держим канал связи открытым для асинхронного sendResponse
+  }
 });
+
+// Автоматическое переключение на зеркало animego.co при блокировке/ошибке animego.me (для РФ)
+const recentMirrorRedirects = new Map();
+
+if (chrome.webNavigation && chrome.webNavigation.onErrorOccurred) {
+  chrome.webNavigation.onErrorOccurred.addListener((details) => {
+    // Реагируем только на основное окно вкладки (frameId === 0)
+    if (details.frameId !== 0 || !details.url) return;
+
+    try {
+      const u = new URL(details.url);
+      const isAnimeGoMe = u.hostname === 'animego.me' || u.hostname.endsWith('.animego.me');
+
+      if (isAnimeGoMe) {
+        const lastTime = recentMirrorRedirects.get(details.tabId) || 0;
+        if (Date.now() - lastTime < 12000) return; // Защита от частых цикличных перенаправлений
+        recentMirrorRedirects.set(details.tabId, Date.now());
+
+        const mirrorUrl = details.url.replace(/animego\.me/i, 'animego.co');
+        console.log(`[AnimeGO Mirror] Ошибка загрузки ${details.url} (${details.error}). Автоперенаправление на зеркало: ${mirrorUrl}`);
+
+        chrome.tabs.update(details.tabId, { url: mirrorUrl });
+      }
+    } catch (e) {}
+  });
+}
+
 
