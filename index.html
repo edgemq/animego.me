@@ -1465,6 +1465,8 @@
           if (activePeerConn === conn) activePeerConn = null;
           console.warn('[P2P Remote] Ошибка канала связи:', err);
         });
+      }
+
       let isVideoPlaying = false;
 
       function updatePlayPauseIcon(isPlaying) {
