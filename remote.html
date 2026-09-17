@@ -446,7 +446,12 @@
       color: #fff;
       cursor: pointer;
       box-shadow: 0 8px 24px var(--accent-glow);
-      transition: transform 0.1s ease, box-shadow 0.15s ease;
+      transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.2s ease;
+    }
+
+    .btn-play-pause.playing {
+      background: linear-gradient(135deg, #059669, #10b981);
+      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.45);
     }
 
     .btn-play-pause:active {
@@ -996,8 +1001,8 @@
               <span>-10с</span>
             </button>
 
-            <button class="btn-play-pause" data-cmd="TOGGLE_PLAY" title="Пауза / Плей">
-              <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <button class="btn-play-pause" id="btnPlayPause" data-cmd="TOGGLE_PLAY" title="Пауза / Плей">
+              <svg viewBox="0 0 24 24" id="iconPlayPause"><path d="M8 5v14l11-7z"/></svg>
             </button>
 
             <button class="btn-seek" data-cmd="SEEK_FORWARD" data-seconds="10" title="Вперед 10 сек">
@@ -1460,11 +1465,33 @@
           if (activePeerConn === conn) activePeerConn = null;
           console.warn('[P2P Remote] Ошибка канала связи:', err);
         });
+      let isVideoPlaying = false;
+
+      function updatePlayPauseIcon(isPlaying) {
+        isVideoPlaying = Boolean(isPlaying);
+        const btn = document.getElementById('btnPlayPause');
+        if (!btn) return;
+        const iconSvg = btn.querySelector('svg');
+        if (!iconSvg) return;
+
+        if (isVideoPlaying) {
+          iconSvg.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+          btn.title = 'Пауза';
+          btn.classList.add('playing');
+        } else {
+          iconSvg.innerHTML = '<path d="M8 5v14l11-7z"/>';
+          btn.title = 'Воспроизведение';
+          btn.classList.remove('playing');
+        }
       }
 
       // Обработка данных от компьютера
       function handleServerEvent(msg) {
         if (!msg || typeof msg !== 'object') return;
+
+        if (typeof msg.isPlaying === 'boolean') {
+          updatePlayPauseIcon(msg.isPlaying);
+        }
 
         if (msg.type === 'CURRENT_INFO') {
           if (msg.title) {
@@ -1898,6 +1925,13 @@
           const cmd = btn.getAttribute('data-cmd');
           const seconds = btn.getAttribute('data-seconds');
           const extra = seconds ? { seconds: parseInt(seconds, 10) } : {};
+          if (cmd === 'TOGGLE_PLAY') {
+            updatePlayPauseIcon(!isVideoPlaying);
+          } else if (cmd === 'PLAY') {
+            updatePlayPauseIcon(true);
+          } else if (cmd === 'PAUSE') {
+            updatePlayPauseIcon(false);
+          }
           sendCommand(cmd, extra, true);
         });
       });

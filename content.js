@@ -1328,6 +1328,7 @@
         mirror: 'animego.co',
         isMirrorCo: true,
         isKodik: true,
+        isPlaying: isPlayingState,
         timestamp: Date.now()
       };
     }
@@ -1397,11 +1398,13 @@
       url: window.location.href,
       mirror: window.location.hostname,
       isMirrorCo: window.location.hostname.includes('animego.co'),
+      isPlaying: isPlayingState,
       timestamp: Date.now()
     };
   }
 
   let latestKodikState = null;
+  let isPlayingState = false;
   let lastSentHash = '';
   let lastSentTime = 0;
   let activePeer = null;
@@ -1432,7 +1435,7 @@
 
     try {
       const info = await getCurrentAnimeInfo();
-      const stateHash = `${info.title}_${info.currentEpisode}_${info.isPlayerStarted}_${info.translations.length}_${info.providers.length}_${info.episodes.length}_${info.mirror}`;
+      const stateHash = `${info.title}_${info.currentEpisode}_${info.isPlayerStarted}_${info.isPlaying}_${info.translations.length}_${info.providers.length}_${info.episodes.length}_${info.mirror}`;
 
       const now = Date.now();
       if (!force && stateHash === lastSentHash && now - lastSentTime < 1000) {
@@ -2203,22 +2206,39 @@
         }
         break;
 
-      case 'TOGGLE_PLAY':
-        if (tryStartTopPlayer()) return;
+      case 'TOGGLE_PLAY': {
         showToast('📱 Пульт: Пауза / Воспроизведение', 'info');
+        const topVideos = Array.from(document.querySelectorAll('video')).filter(v => !v.closest('.ad, [class*="banner"], [id*="banner"]'));
+        const topVideo = topVideos.find(v => !v.paused && v.currentTime > 0) || topVideos[0];
+        if (topVideo) {
+          if (topVideo.paused) topVideo.play().catch(() => {});
+          else topVideo.pause();
+        }
         broadcastToFrames({ type: 'ANIMEGO_REMOTE_COMMAND', command: 'TOGGLE_PLAY' });
         break;
+      }
 
-      case 'PLAY':
-        if (tryStartTopPlayer()) return;
+      case 'PLAY': {
         showToast('📱 Пульт: Воспроизведение', 'info');
+        const topVideos = Array.from(document.querySelectorAll('video')).filter(v => !v.closest('.ad, [class*="banner"], [id*="banner"]'));
+        const topVideo = topVideos.find(v => !v.paused && v.currentTime > 0) || topVideos[0];
+        if (topVideo) {
+          topVideo.play().catch(() => {});
+        }
         broadcastToFrames({ type: 'ANIMEGO_REMOTE_COMMAND', command: 'PLAY' });
         break;
+      }
 
-      case 'PAUSE':
+      case 'PAUSE': {
         showToast('📱 Пульт: Пауза', 'info');
+        const topVideos = Array.from(document.querySelectorAll('video')).filter(v => !v.closest('.ad, [class*="banner"], [id*="banner"]'));
+        const topVideo = topVideos.find(v => !v.paused && v.currentTime > 0) || topVideos[0];
+        if (topVideo) {
+          topVideo.pause();
+        }
         broadcastToFrames({ type: 'ANIMEGO_REMOTE_COMMAND', command: 'PAUSE' });
         break;
+      }
 
       case 'SEEK_BACK':
         showToast(`📱 Пульт: -${extra.seconds || 10}с`, 'info');
@@ -2601,6 +2621,12 @@
       return;
     }
 
+    if (event.data.type === 'ANIMEGO_PLAY_STATE_CHANGED') {
+      isPlayingState = Boolean(event.data.isPlaying);
+      sendCurrentInfoToRemote(true);
+      return;
+    }
+
     if (event.data.type === 'ANIMEGO_KODIK_STATE') {
       console.log('[AnimeGO Next Episode] Получено состояние Kodik из фрейма:', event.data);
       latestKodikState = {
@@ -2613,4 +2639,18 @@
       return;
     }
   });
+
+  document.addEventListener('play', (e) => {
+    if (e.target && e.target.tagName === 'VIDEO') {
+      isPlayingState = true;
+      sendCurrentInfoToRemote(true);
+    }
+  }, true);
+
+  document.addEventListener('pause', (e) => {
+    if (e.target && e.target.tagName === 'VIDEO') {
+      isPlayingState = false;
+      sendCurrentInfoToRemote(true);
+    }
+  }, true);
 })();

@@ -236,11 +236,19 @@
       }
       try {
         window.top.postMessage({ type: 'ANIMEGO_PLAYING' }, '*');
+        window.top.postMessage({ type: 'ANIMEGO_PLAY_STATE_CHANGED', isPlaying: true }, '*');
+      } catch (e) {}
+    };
+
+    const markPaused = () => {
+      try {
+        window.top.postMessage({ type: 'ANIMEGO_PLAY_STATE_CHANGED', isPlaying: false }, '*');
       } catch (e) {}
     };
 
     video.addEventListener('play', markPlaying);
     video.addEventListener('playing', markPlaying);
+    video.addEventListener('pause', markPaused);
 
     function checkEnded(eventSource) {
       if (hasReportedEnded) return;
@@ -298,7 +306,13 @@
   }
 
   function getActiveVideo() {
-    return Array.from(document.querySelectorAll('video')).find((v) => !isAdElement(v));
+    const videos = Array.from(document.querySelectorAll('video')).filter((v) => !isAdElement(v));
+    if (videos.length === 0) return null;
+    const playing = videos.find((v) => !v.paused && v.currentTime > 0);
+    if (playing) return playing;
+    const withSrc = videos.find((v) => (v.src || v.currentSrc) && v.readyState > 0);
+    if (withSrc) return withSrc;
+    return videos[0];
   }
 
   // Прием сигналов от родительского окна AnimeGO
@@ -332,16 +346,20 @@
           break;
         }
         case 'TOGGLE_PLAY': {
-          if (!video || (video.paused && video.currentTime === 0 && !hasClickedPlay)) {
-            tryStartPlayback();
-          } else if (video.paused) {
-            video.play().catch(() => tryStartPlayback());
+          const video = getActiveVideo();
+          if (video) {
+            if (video.paused) {
+              video.play().catch(() => tryStartPlayback());
+            } else {
+              video.pause();
+            }
           } else {
-            video.pause();
+            tryStartPlayback();
           }
           break;
         }
         case 'PLAY': {
+          const video = getActiveVideo();
           if (video) {
             video.play().catch(() => tryStartPlayback());
           } else {
@@ -350,7 +368,10 @@
           break;
         }
         case 'PAUSE': {
-          if (video) video.pause();
+          const video = getActiveVideo();
+          if (video) {
+            video.pause();
+          }
           break;
         }
         case 'SEEK_BACK': {
